@@ -2,6 +2,8 @@
  * Server role enum - used for single/multi-model mode
  */
 export enum ServerRole {
+	/** External OpenAI-compatible endpoint, set by the apiBaseUrl setting */
+	EXTERNAL = 'external',
 	/** Single model mode - server running with a specific model loaded */
 	MODEL = 'model',
 	/** Router mode - server managing multiple model instances */

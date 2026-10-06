@@ -156,6 +156,8 @@ export class ModelPropsManager {
 
 		if (cached) return cached;
 
+		if (serverStore.isExternal) return null;
+
 		if (serverStore.isRouterMode && !this.host.isModelLoaded(modelId)) {
 			return null;
 		}
@@ -196,6 +198,11 @@ export class ModelPropsManager {
 
 		if (model?.modalities) {
 			return model.modalities;
+		}
+
+		// no way to probe an external model, let the provider reject unsupported input
+		if (serverStore.isExternal) {
+			return { audio: false, video: false, vision: true };
 		}
 
 		const props = this.cache.get(modelId);

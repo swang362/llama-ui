@@ -32,7 +32,7 @@ import { mcpStore } from '$lib/stores/mcp/index.svelte';
 import { modelsStore } from '$lib/stores/models/index.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import type { OpenAIToolDefinition, ToolEntry, ToolGroup } from '$lib/types';
-import { ApiError, buildSandboxToolDefinition } from '$lib/utils';
+import { ApiError, buildSandboxToolDefinition, isExternalApi } from '$lib/utils';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 /** Stable selection identity for a tool, shared by the disabled set and the permission store */
@@ -234,6 +234,14 @@ class ToolsStore {
 	async fetchServerTools(): Promise<void> {
 		if (this._loading) return;
 
+		// external API has no built-in server tools
+		if (isExternalApi()) {
+			this._serverTools = [];
+			this._toolsEndpointUnreachable = true;
+
+			return;
+		}
+
 		this._loading = true;
 		this._error = null;
 		this._toolsEndpointUnreachable = false;
@@ -429,6 +437,12 @@ class ToolsStore {
 	 */
 	async resolveServerHome(): Promise<string | null> {
 		if (this._serverHome !== undefined) return this._serverHome;
+
+		if (isExternalApi()) {
+			this._serverHome = null;
+
+			return null;
+		}
 
 		try {
 			const res = await ToolsService.executeToolRaw(BuiltInTool.SERVER_FILE_GLOB_SEARCH, {

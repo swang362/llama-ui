@@ -18,7 +18,7 @@ Llama UI supports two server operation modes:
 - [Architecture](#architecture)
 - [Data Flows](#data-flows)
 - [Architectural Patterns](#architectural-patterns)
-- [Testing](#testing)
+- [Linting and Formatting](#linting-and-formatting)
 
 ---
 
@@ -72,7 +72,6 @@ Llama UI supports two server operation modes:
 ### Developer Experience
 
 - **Request tracking** - Monitor token generation with `/slots` endpoint
-- **Storybook** - Component library with visual testing
 - **Hot reload** - Instant updates during development
 
 ---
@@ -104,16 +103,13 @@ In a separate terminal, start the backend server:
 ./llama-server --models-dir /path/to/models
 ```
 
-### 3. Start Development Servers
+### 3. Start Development Server
 
 ```bash
 npm run dev
 ```
 
-This starts:
-
-- **Vite dev server** at `http://localhost:5173` - The main UI frontend app
-- **Storybook** at `http://localhost:6006` - Component documentation
+This starts the **Vite dev server** at `http://localhost:5173`.
 
 The Vite dev server proxies API requests to `SERVER_ORIGIN` (with fallback to default llama-server `8080` port):
 
@@ -134,21 +130,19 @@ proxy: {
 1. Open `http://localhost:5173` in your browser
 2. Make changes to `.svelte`, `.ts`, or `.css` files
 3. Changes hot-reload instantly
-4. Use Storybook at `http://localhost:6006` for isolated component development
 
 ---
 
 ## Tech Stack
 
-| Layer             | Technology                      | Purpose                                                  |
-| ----------------- | ------------------------------- | -------------------------------------------------------- |
-| **Framework**     | SvelteKit + Svelte 5            | Reactive UI with runes (`$state`, `$derived`, `$effect`) |
-| **UI Components** | shadcn-svelte + bits-ui         | Accessible, customizable component library               |
-| **Styling**       | TailwindCSS 4                   | Utility-first CSS with design tokens                     |
-| **Database**      | IndexedDB (Dexie)               | Client-side storage for conversations and messages       |
-| **Build**         | Vite                            | Fast bundling with static adapter                        |
-| **Testing**       | Playwright + Vitest + Storybook | E2E, unit, and visual testing                            |
-| **Markdown**      | remark + rehype                 | Markdown processing with KaTeX and syntax highlighting   |
+| Layer             | Technology              | Purpose                                                  |
+| ----------------- | ----------------------- | -------------------------------------------------------- |
+| **Framework**     | SvelteKit + Svelte 5    | Reactive UI with runes (`$state`, `$derived`, `$effect`) |
+| **UI Components** | shadcn-svelte + bits-ui | Accessible, customizable component library               |
+| **Styling**       | TailwindCSS 4           | Utility-first CSS with design tokens                     |
+| **Database**      | IndexedDB (Dexie)       | Client-side storage for conversations and messages       |
+| **Build**         | Vite                    | Fast bundling with static adapter                        |
+| **Markdown**      | remark + rehype         | Markdown processing with KaTeX and syntax highlighting   |
 
 ### Key Dependencies
 
@@ -665,38 +659,7 @@ flowchart TB
 
 ---
 
-## Testing
-
-### Test Types
-
-| Type          | Tool               | Location         | Command             |
-| ------------- | ------------------ | ---------------- | ------------------- |
-| **Unit**      | Vitest             | `tests/unit/`    | `npm run test:unit` |
-| **UI/Visual** | Storybook + Vitest | `tests/stories/` | `npm run test:ui`   |
-| **E2E**       | Playwright         | `tests/e2e/`     | `npm run test:e2e`  |
-| **Client**    | Vitest             | `tests/client/`. | `npm run test:unit` |
-
-### Running Tests
-
-```bash
-# All tests
-npm run test
-
-# Individual test suites
-npm run test:e2e      # End-to-end (requires llama-server)
-npm run test:client   # Client-side unit tests
-npm run test:server   # Server-side unit tests
-npm run test:ui       # Storybook visual tests
-```
-
-### Storybook Development
-
-```bash
-npm run storybook     # Start Storybook dev server on :6006
-npm run build-storybook  # Build static Storybook
-```
-
-### Linting and Formatting
+## Linting and Formatting
 
 ```bash
 npm run lint          # Check code style
@@ -720,9 +683,7 @@ tools/ui/
 │   │   └── utils/        # Utility functions
 │   ├── routes/           # SvelteKit routes
 │   └── styles/           # Global styles
-├── static/               # Static assets
-├── tests/                # Test files
-└── .storybook/           # Storybook configuration
+└── static/               # Static assets
 ```
 
 ---

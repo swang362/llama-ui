@@ -1,4 +1,9 @@
 import { CLI_FLAGS } from './cli-flags.constants';
+import {
+	MANAGED_HIDDEN_SETTINGS,
+	MANAGED_LOCKED_SETTINGS,
+	MANAGED_MODE
+} from './managed.constants';
 import { DEFAULT_MCP_CONFIG } from './mcp.constants';
 import { SETTINGS_KEYS } from './settings-keys.constants';
 import { TITLE_GENERATION } from './title-generation.constants';
@@ -75,7 +80,16 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 			},
 			{
 				defaultValue: '',
-				help: `Set the API Key if you are using <code> ${CLI_FLAGS.API_KEY} </code> option for the server.`,
+				help: 'Base URL of an external OpenAI-compatible API, for example <code>https://api.openai.com/v1</code>. Leave empty to use llama-server. The endpoint must allow browser CORS requests.',
+				key: SETTINGS_KEYS.API_BASE_URL,
+				label: 'API Base URL',
+				type: SettingsFieldType.INPUT
+			},
+			{
+				defaultValue: '',
+				help: MANAGED_MODE
+					? 'API key for this service.'
+					: `Set the API Key if you are using <code> ${CLI_FLAGS.API_KEY} </code> option for the server, or the key of the external API.`,
 				isPrivate: true,
 				key: SETTINGS_KEYS.API_KEY,
 				label: 'API Key',
@@ -662,11 +676,12 @@ export const SETTING_CONFIG_INFO: Record<string, string> = Object.fromEntries(
 function toSettingsSection(section: SettingsSectionEntry): SettingsSection {
 	return {
 		fields: section.settings
-			.filter((s) => s.standaloneField !== false)
+			.filter((s) => s.standaloneField !== false && !MANAGED_HIDDEN_SETTINGS.has(s.key))
 			.map((s) => ({
 				dependsOn: s.dependsOn,
-				help: s.help,
+				help: MANAGED_LOCKED_SETTINGS.has(s.key) ? 'Managed by this deployment.' : s.help,
 				isExperimental: s.isExperimental,
+				isLocked: MANAGED_LOCKED_SETTINGS.has(s.key),
 				isPositiveInteger: s.isPositiveInteger,
 				isPrivate: s.isPrivate,
 				key: s.key,
@@ -685,7 +700,12 @@ function toSettingsSection(section: SettingsSectionEntry): SettingsSection {
 }
 
 /** Sidebar sections in custom display order (the registry array order). */
-export const SETTINGS_CHAT_SECTIONS: SettingsSection[] = SETTINGS_REGISTRY.map(toSettingsSection);
+export const SETTINGS_CHAT_SECTIONS: SettingsSection[] = SETTINGS_REGISTRY.filter(
+	// drop a section when managed mode hides all of its fields
+	(section) =>
+		section.settings.length === 0 ||
+		section.settings.some((s) => !MANAGED_HIDDEN_SETTINGS.has(s.key))
+).map(toSettingsSection);
 
 /** INPUT-type settings whose value is a number. */
 export const NUMERIC_FIELDS = getAllSettings()

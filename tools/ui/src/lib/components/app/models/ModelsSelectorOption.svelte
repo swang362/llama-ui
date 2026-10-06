@@ -13,7 +13,7 @@
 	import { ActionIcon, ModelId } from '$lib/components/app';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
 	import { ModelCapability, ServerModelStatus } from '$lib/enums';
-	import { modelsStore } from '$lib/stores';
+	import { modelsStore, serverStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
 	import { modelLoadFraction, modelLoadProgressText } from '$lib/utils';
 
@@ -122,7 +122,7 @@
 			{/if}
 
 			<!-- info button: only shown when model is loaded and callback is provided -->
-			{#if isLoaded && onInfoClick}
+			{#if isLoaded && onInfoClick && !serverStore.isExternal}
 				<ActionIcon
 					class="h-3 w-3 hover:text-foreground"
 					icon={Info}
@@ -133,7 +133,9 @@
 			{/if}
 		</div>
 
-		{#if isLoading}
+		{#if serverStore.isExternal}
+			<!-- external models have no load state -->
+		{:else if isLoading}
 			<div class="flex w-4 items-center justify-center [@media(pointer:coarse)]:w-5">
 				<Loader2 class="{ICON_CLASS_DEFAULT} animate-spin text-muted-foreground" />
 			</div>

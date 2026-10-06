@@ -8,7 +8,14 @@
  */
 
 import { browser } from '$app/environment';
-import { SETTING_CONFIG_DEFAULT, SETTINGS_KEYS } from '$lib/constants';
+import {
+	MANAGED_API_KEY,
+	MANAGED_API_PATH,
+	MANAGED_HIDDEN_SETTINGS,
+	MANAGED_MODE,
+	SETTING_CONFIG_DEFAULT,
+	SETTINGS_KEYS
+} from '$lib/constants';
 import { ColorMode } from '$lib/enums';
 import { ParameterSyncService } from '$lib/services/parameter-sync.service';
 import { SettingsService } from '$lib/services/settings.service';
@@ -416,6 +423,24 @@ class SettingsStore {
 	 */
 
 	/**
+	 * Force the values a managed deployment locks. Runs after every load and
+	 * before every save, so no import, reset or server push can change them.
+	 */
+	private applyManagedSettings() {
+		if (!MANAGED_MODE) return;
+
+		for (const key of MANAGED_HIDDEN_SETTINGS) {
+			setConfigValue(this.config, key, getConfigValue(SETTING_CONFIG_DEFAULT, key));
+		}
+
+		this.config[SETTINGS_KEYS.API_BASE_URL] = `${location.origin}${MANAGED_API_PATH}`;
+
+		if (MANAGED_API_KEY) {
+			this.config[SETTINGS_KEYS.API_KEY] = MANAGED_API_KEY;
+		}
+	}
+
+	/**
 	 * Helper method to get server defaults with null safety
 	 * Centralizes the pattern of getting and extracting server defaults
 	 */
@@ -455,6 +480,8 @@ class SettingsStore {
 
 		// Load user overrides
 		this.userOverrides = new Set(savedOverrides);
+
+		this.applyManagedSettings();
 	}
 
 	/**
@@ -481,6 +508,7 @@ class SettingsStore {
 	private saveConfig() {
 		if (!browser) return;
 
+		this.applyManagedSettings();
 		SettingsService.saveConfig(this.config, Array.from(this.userOverrides));
 	}
 }

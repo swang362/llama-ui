@@ -13,7 +13,7 @@
 	import { setChatFormActionsContext } from '$lib/contexts';
 	import { FileTypeCategory, MessageRole } from '$lib/enums';
 	import { ChatService } from '$lib/services';
-	import { chatStore, conversationsStore, settingsStore } from '$lib/stores';
+	import { chatStore, conversationsStore, serverStore, settingsStore } from '$lib/stores';
 	import { getFileTypeCategory } from '$lib/utils';
 
 	interface Props {
@@ -175,7 +175,7 @@
 		{/if}
 	</div>
 
-	{#if isReasoning}
+	{#if isReasoning && !serverStore.isExternal}
 		<Button
 			class="group h-8 w-8 rounded-full p-0"
 			onclick={() =>

@@ -1406,6 +1406,8 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		model?: string | null,
 		excludeReasoning?: boolean
 	): Promise<void> {
+		if (serverStore.isExternal) return;
+
 		this.cancelPreEncode();
 		this.preEncodeAbortController = new AbortController();
 

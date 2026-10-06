@@ -97,5 +97,3 @@ export {
 	ToolPermissionDecision,
 	ToolResponseField
 } from './tools.enums';
-
-export { SplashOrientation } from './splash.enums';

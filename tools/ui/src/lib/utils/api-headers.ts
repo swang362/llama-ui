@@ -4,6 +4,18 @@ import { MimeTypeApplication } from '$lib/enums';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 
 /**
+ * Base URL of the external OpenAI-compatible API, without trailing slash.
+ * Empty string means the UI talks to llama-server.
+ */
+export function getApiBaseUrl(): string {
+	return (settingsStore.config.apiBaseUrl?.toString().trim() ?? '').replace(/\/+$/, '');
+}
+
+export function isExternalApi(): boolean {
+	return getApiBaseUrl() !== '';
+}
+
+/**
  * Get authorization headers for API requests
  * Includes Bearer token if API key is configured
  */

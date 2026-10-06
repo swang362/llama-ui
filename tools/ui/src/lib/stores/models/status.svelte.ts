@@ -106,7 +106,7 @@ export class ModelStatusManager {
 	 * the cache (ROUTER mode only).
 	 */
 	async cancelDownload(repoWithTag: string): Promise<boolean> {
-		if (!serverStore.isRouterMode) {
+		if (!serverStore.isRouterMode || serverStore.isExternal) {
 			toast.error('Model downloads are only available in router mode');
 
 			return false;
@@ -150,7 +150,7 @@ export class ModelStatusManager {
 	 * settled status, so no waiter is registered here.
 	 */
 	async cancelLoad(modelId: string): Promise<void> {
-		if (!serverStore.isRouterMode) return;
+		if (!serverStore.isRouterMode || serverStore.isExternal) return;
 
 		this.subscribe();
 
@@ -187,7 +187,7 @@ export class ModelStatusManager {
 	 * Re-posting a paused tag resumes from the partial files kept on disk.
 	 */
 	async downloadModel(repoWithTag: string): Promise<void> {
-		if (!serverStore.isRouterMode) {
+		if (!serverStore.isRouterMode || serverStore.isExternal) {
 			toast.error('Model downloads are only available in router mode');
 
 			return;
@@ -328,7 +328,7 @@ export class ModelStatusManager {
 	 * as download_failed; the 'pause' stop request marks it as intentional.
 	 */
 	async pauseDownload(repoWithTag: string): Promise<void> {
-		if (!serverStore.isRouterMode) {
+		if (!serverStore.isRouterMode || serverStore.isExternal) {
 			toast.error('Model downloads are only available in router mode');
 
 			return;
@@ -350,7 +350,7 @@ export class ModelStatusManager {
 	subscribe(): void {
 		if (this.statusReaderActive) return;
 
-		if (!serverStore.isRouterMode) return;
+		if (!serverStore.isRouterMode || serverStore.isExternal) return;
 
 		this.statusReaderActive = true;
 		this.statusAbort = new AbortController();
@@ -358,7 +358,7 @@ export class ModelStatusManager {
 	}
 
 	async unload(modelId: string): Promise<void> {
-		if (!this.host.isModelLoaded(modelId)) return;
+		if (serverStore.isExternal || !this.host.isModelLoaded(modelId)) return;
 
 		if (this.loadingStates.get(modelId)) return;
 

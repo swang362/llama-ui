@@ -8,7 +8,13 @@
  */
 
 // API utilities
-export { getAuthHeaders, getJsonHeaders, sanitizeHeaders } from './api-headers';
+export {
+	getApiBaseUrl,
+	getAuthHeaders,
+	getJsonHeaders,
+	isExternalApi,
+	sanitizeHeaders
+} from './api-headers';
 export { ApiError, apiDelete, apiFetch, apiFetchWithParams, apiPost } from './api-fetch';
 export { validateApiKey } from './api-key-validation';
 

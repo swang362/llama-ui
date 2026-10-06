@@ -79,27 +79,6 @@ export const PWA_ICON_PATHS = {
 	PWA_512: '/pwa-512x512.png'
 } as const;
 
-/** Apple device dimensions (logical points) and DPR, from Apple HIG. */
-export const APPLE_DEVICES = {
-	'640x1136': { dpr: 2, height: 568, width: 320 }, // iPhone 6/7/8 Plus
-	'744x1133': { dpr: 2, height: 573, width: 376 }, // iPad mini 8.3"
-	'750x1334': { dpr: 2, height: 667, width: 375 }, // iPhone 6/7/8, 14
-	'1032x1376': { dpr: 2, height: 1376, width: 1032 }, // iPad Air 13"
-	// iPhones (DPR 3)
-	'1170x2532': { dpr: 3, height: 844, width: 390 }, // iPhone 13, 15
-	'1179x2556': { dpr: 3, height: 852, width: 393 }, // iPhone 14, 15 Pro, 16
-	'1206x2622': { dpr: 3, height: 874, width: 402 }, // iPhone 16 Plus, 16e
-	'1284x2778': { dpr: 3, height: 926, width: 428 }, // iPhone 15 Plus
-	'1290x2796': { dpr: 3, height: 932, width: 430 }, // iPhone 15 Pro Max, 16 Pro
-	'1320x2868': { dpr: 3, height: 956, width: 440 }, // iPhone 16 Pro Max
-	'1640x2360': { dpr: 2, height: 1180, width: 820 }, // iPad Air 10.9"
-	// iPads (DPR 2)
-	'1668x2388': { dpr: 2, height: 1194, width: 834 }, // iPad Air 11", iPad 11"
-	'2048x2732': { dpr: 2, height: 1366, width: 1024 } // iPad Pro 12.9"
-} as const;
-
-export type AppleDeviceKey = keyof typeof APPLE_DEVICES;
-
 export const PWA_FILE_PATHS = {
 	MANIFEST: '/manifest.webmanifest',
 	SERVICE_WORKER: '/sw.js',
@@ -129,54 +108,6 @@ export const PUBLIC_ENDPOINTS = [
 	'/pwa-512x512.png',
 	'/maskable-icon-512x512.png',
 	'/apple-touch-icon-180x180.png',
-	'/apple-splash-portrait-640x1136.png',
-	'/apple-splash-landscape-640x1136.png',
-	'/apple-splash-portrait-750x1334.png',
-	'/apple-splash-landscape-750x1334.png',
-	'/apple-splash-portrait-1170x2532.png',
-	'/apple-splash-landscape-1170x2532.png',
-	'/apple-splash-portrait-1179x2556.png',
-	'/apple-splash-landscape-1179x2556.png',
-	'/apple-splash-portrait-1206x2622.png',
-	'/apple-splash-landscape-1206x2622.png',
-	'/apple-splash-portrait-1284x2778.png',
-	'/apple-splash-landscape-1284x2778.png',
-	'/apple-splash-portrait-1290x2796.png',
-	'/apple-splash-landscape-1290x2796.png',
-	'/apple-splash-portrait-1320x2868.png',
-	'/apple-splash-landscape-1320x2868.png',
-	'/apple-splash-portrait-1488x2266.png',
-	'/apple-splash-landscape-1488x2266.png',
-	'/apple-splash-portrait-1640x2360.png',
-	'/apple-splash-landscape-1640x2360.png',
-	'/apple-splash-portrait-1668x2388.png',
-	'/apple-splash-landscape-1668x2388.png',
-	'/apple-splash-portrait-2048x2732.png',
-	'/apple-splash-landscape-2048x2732.png',
-	'/apple-splash-portrait-dark-640x1136.png',
-	'/apple-splash-landscape-dark-640x1136.png',
-	'/apple-splash-portrait-dark-750x1334.png',
-	'/apple-splash-landscape-dark-750x1334.png',
-	'/apple-splash-portrait-dark-1170x2532.png',
-	'/apple-splash-landscape-dark-1170x2532.png',
-	'/apple-splash-portrait-dark-1179x2556.png',
-	'/apple-splash-landscape-dark-1179x2556.png',
-	'/apple-splash-portrait-dark-1206x2622.png',
-	'/apple-splash-landscape-dark-1206x2622.png',
-	'/apple-splash-portrait-dark-1284x2778.png',
-	'/apple-splash-landscape-dark-1284x2778.png',
-	'/apple-splash-portrait-dark-1290x2796.png',
-	'/apple-splash-landscape-dark-1290x2796.png',
-	'/apple-splash-portrait-dark-1320x2868.png',
-	'/apple-splash-landscape-dark-1320x2868.png',
-	'/apple-splash-portrait-dark-1488x2266.png',
-	'/apple-splash-landscape-dark-1488x2266.png',
-	'/apple-splash-portrait-dark-1640x2360.png',
-	'/apple-splash-landscape-dark-1640x2360.png',
-	'/apple-splash-portrait-dark-1668x2388.png',
-	'/apple-splash-landscape-dark-1668x2388.png',
-	'/apple-splash-portrait-dark-2048x2732.png',
-	'/apple-splash-landscape-dark-2048x2732.png',
 	'/manifest.webmanifest',
 	'/sw.js',
 	'/version.json',
@@ -194,57 +125,14 @@ export const BUILD_CONFIG = {
 	OUTPUT_DIR: './dist'
 } as const;
 
-export const REGEX_PATTERNS = {
-	HEAD_CLOSE: /\t*<\/head>/,
-	SPLASH_FILE: /^apple-splash-(portrait|landscape)-(dark-)?(\d+)x(\d+)\.png$/
-} as const;
-
-// Device names used by @vite-pwa/assets-generator for splash screen generation.
-// Keep in sync with pwa-assets.config.ts.
-export const PWA_GENERATOR_DEVICES = [
-	'iPhone 13',
-	'iPhone 13 Pro',
-	'iPhone 13 Pro Max',
-	'iPhone 14',
-	'iPhone 14 Plus',
-	'iPhone 14 Pro',
-	'iPhone 14 Pro Max',
-	'iPhone 15',
-	'iPhone 15 Plus',
-	'iPhone 15 Pro',
-	'iPhone 15 Pro Max',
-	'iPhone 16',
-	'iPhone 16 Plus',
-	'iPhone 16 Pro',
-	'iPhone 16 Pro Max',
-	'iPhone 16e',
-	'iPhone SE 4"',
-	'iPhone SE 4.7"',
-	'iPad 11"',
-	'iPad Air 10.9"',
-	'iPad Air 11"',
-	'iPad Air 13"',
-	'iPad Pro 11"',
-	'iPad Pro 12.9"',
-	'iPad mini 8.3"'
-] as const;
-
 // PWA assets generator configuration — used by pwa-assets.config.ts
 // FAVICON_PADDING: fraction (0..1) of the icon reserved as equal margin on
 // each side. Applied to icon PNG/ICO outputs by @vite-pwa/assets-generator and
 // post-processed into the static favicon.svg so the in-app logo (which reads
 // src/lib/assets/logo.svg directly) is unaffected.
 export const PWA_ASSET_GENERATOR = {
-	ADD_MEDIA_SCREEN: true,
-	BASE_PATH: './',
-	DARK_PREFIX: 'dark-',
 	FAVICON_PADDING: 0.04,
-	FIT_MODE: 'contain',
-	LINK_PRESET: '2023',
-	PNG_COMPRESSION_LEVEL: 9,
-	PNG_QUALITY: 60,
-	SPLASH_PADDING: 0.75,
-	XHTML: false
+	LINK_PRESET: '2023'
 } as const;
 
 export const CACHE_SETTINGS = {
@@ -288,12 +176,6 @@ export const APPLE_META_TAGS = {
 	MOBILE_WEB_APP_CAPABLE: { content: 'yes', name: 'apple-mobile-web-app-capable' },
 	MOBILE_WEB_APP_TITLE: { name: 'apple-mobile-web-app-title' },
 	STATUS_BAR_STYLE: { content: 'black-translucent', name: 'apple-mobile-web-app-status-bar-style' }
-} as const;
-
-// Splash screen HTML link tag prefix used by generateSplashScreenLinks
-export const SPLASH_LINK = {
-	DARK_MEDIA_SUFFIX: ' and (prefers-color-scheme: dark)',
-	HTML: '<link rel="apple-touch-startup-image"'
 } as const;
 
 // SvelteKit PWA plugin configuration — used by @vite.config.ts

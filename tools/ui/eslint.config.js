@@ -1,11 +1,9 @@
-// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
 import svelteConfig from './svelte.config.js';
 import { includeIgnoreFile } from '@eslint/compat';
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import perfectionist from 'eslint-plugin-perfectionist';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import storybook from 'eslint-plugin-storybook';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import { fileURLToPath } from 'node:url';
@@ -321,16 +319,13 @@ export default ts.config(
 		}
 	},
 	{
-		// Exclude generated build output and Storybook files from ESLint
+		// Exclude generated build output from ESLint
 		ignores: [
 			'dist/**',
 			'build/**',
 			'.svelte-kit/**',
-			'test-results/**',
-			'.storybook/**/*',
 			'src/lib/services/sandbox-worker.js',
 			'src/lib/vendors/**'
 		]
-	},
-	storybook.configs['flat/recommended']
+	}
 );

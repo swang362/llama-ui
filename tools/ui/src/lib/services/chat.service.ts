@@ -29,6 +29,7 @@ import {
 	AttachmentType,
 	ContentPartType,
 	MessageRole,
+	ReasoningEffort,
 	ReasoningFormat,
 	StreamConnectionState
 } from '$lib/enums';
@@ -43,7 +44,12 @@ import type {
 } from '$lib/types/api';
 import { isAbortError } from '$lib/utils/abort';
 import { ApiError } from '$lib/utils/api-fetch';
-import { getAuthHeaders, getJsonHeaders } from '$lib/utils/api-headers';
+import {
+	getApiBaseUrl,
+	getAuthHeaders,
+	getJsonHeaders,
+	isExternalApi
+} from '$lib/utils/api-headers';
 import { formatAttachmentText } from '$lib/utils/formatters';
 import { streamIdentity } from '$lib/utils/stream-identity';
 
@@ -104,7 +110,7 @@ export class ChatService {
 	 * Cancels the server-side replay buffer for a conversation, freeing its slot.
 	 */
 	static async cancelServerStream(conversationId: string, model?: string | null): Promise<void> {
-		if (!conversationId) return;
+		if (!conversationId || isExternalApi()) return;
 
 		try {
 			const id = streamIdentity(conversationId, model);
@@ -387,7 +393,9 @@ export class ChatService {
 			await ChatService.sendMessage(
 				[message],
 				{
-					custom: { chat_template_kwargs: { enable_thinking: false } },
+					custom: isExternalApi()
+						? undefined
+						: { chat_template_kwargs: { enable_thinking: false } },
 					model: model || undefined,
 					onChunk: (chunk: string) => {
 						titleResponse += chunk;
@@ -626,7 +634,8 @@ export class ChatService {
 								const parsed: ApiChatCompletionStreamChunk = JSON.parse(data);
 								const choice = parsed.choices?.[0];
 								const content = choice?.delta?.content;
-								const reasoningContent = choice?.delta?.reasoning_content;
+								const reasoningContent =
+									choice?.delta?.reasoning_content ?? choice?.delta?.reasoning;
 								const toolCalls = choice?.delta?.tool_calls;
 								const timings = parsed.timings;
 								const promptProgress = parsed.prompt_progress;
@@ -685,6 +694,13 @@ export class ChatService {
 				if (abortSignal?.aborted) break;
 
 				if (streamFinished) break;
+
+				// external APIs may close without [DONE] and cannot resume
+				if (isExternalApi()) {
+					streamFinished = true;
+
+					break;
+				}
 
 				if (!conversationId) break;
 
@@ -781,6 +797,8 @@ export class ChatService {
 	 * conv::model identity when a model was bound at POST time.
 	 */
 	static async lookupStreamSessions(conversationIds: string[]): Promise<ApiStreamSession[]> {
+		if (isExternalApi()) return [];
+
 		const resp = await fetch(API_STREAM.LOOKUP, {
 			body: JSON.stringify({ conversation_ids: conversationIds }),
 			headers: getJsonHeaders(),
@@ -1102,7 +1120,7 @@ export class ChatService {
 			});
 		}
 
-		const requestBody: ApiChatCompletionRequest = {
+		let requestBody: ApiChatCompletionRequest = {
 			messages: normalizedMessages.map((msg: ApiChatMessageData) => {
 				const mapped: ApiChatCompletionRequest['messages'][0] = {
 					content: msg.content,
@@ -1207,6 +1225,16 @@ export class ChatService {
 
 		if (timings_per_token !== undefined) requestBody.timings_per_token = timings_per_token;
 
+		const apiBase = getApiBaseUrl();
+
+		// external APIs may reject unknown fields, keep only standard OpenAI ones
+		if (apiBase) {
+			requestBody = ChatService.pickOpenAiFields(
+				requestBody,
+				enableThinking ? reasoningEffort : undefined
+			);
+		}
+
 		if (custom) {
 			try {
 				const customParams = typeof custom === 'string' ? JSON.parse(custom) : custom;
@@ -1223,14 +1251,14 @@ export class ChatService {
 			// tag streaming requests with the conversation id, this single header is the opt in for the
 			// server side replay buffer and powers discoverActiveStream on tab reopen. with an explicit
 			// model the ::model suffix keeps the per model session distinct
-			if (stream && conversationId) {
+			if (stream && conversationId && !apiBase) {
 				headers[HEADERS.X_CONVERSATION_ID_HEADER] = streamIdentity(conversationId, options.model);
 				// persist the pending stream before the fetch: a reload during the model load or
 				// the prompt processing must still find its way back to the session once it exists
 				ChatService.saveStreamState(conversationId, 0, options.model ?? null);
 			}
 
-			const response = await fetch(API_CHAT.COMPLETIONS, {
+			const response = await fetch(apiBase ? `${apiBase}/chat/completions` : API_CHAT.COMPLETIONS, {
 				body: JSON.stringify(requestBody),
 				headers,
 				method: 'POST',
@@ -1264,7 +1292,8 @@ export class ChatService {
 					onModel,
 					onCompletionId,
 					onTimings,
-					conversationId,
+					// no conversation id disables resume, external APIs have no replay buffer
+					apiBase ? undefined : conversationId,
 					signal,
 					onConnectionState,
 					options.model
@@ -1326,6 +1355,8 @@ export class ChatService {
 	 * right child, single model ignores it. Returns true on success.
 	 */
 	static async stopReasoning(completionId: string, model?: string | null): Promise<boolean> {
+		if (isExternalApi()) return false;
+
 		if (!completionId) {
 			console.error(
 				'stopReasoning: no completion id for the active message, cannot target the running completion'
@@ -1619,6 +1650,36 @@ export class ChatService {
 
 			return fallback;
 		}
+	}
+
+	private static pickOpenAiFields(
+		body: ApiChatCompletionRequest,
+		reasoningEffort?: string
+	): ApiChatCompletionRequest {
+		const picked: ApiChatCompletionRequest = {
+			frequency_penalty: body.frequency_penalty,
+			// -1 means unlimited only on llama-server
+			max_tokens: body.max_tokens === -1 ? undefined : body.max_tokens,
+			messages: body.messages.map((msg: ApiChatCompletionRequest['messages'][0]) => ({
+				content: msg.content,
+				role: msg.role,
+				tool_call_id: msg.tool_call_id,
+				tool_calls: msg.tool_calls
+			})),
+			model: body.model,
+			presence_penalty: body.presence_penalty,
+			stream: body.stream,
+			temperature: body.temperature,
+			tools: body.tools,
+			top_p: body.top_p
+		};
+
+		if (reasoningEffort) {
+			picked.reasoning_effort =
+				reasoningEffort === ReasoningEffort.MAX ? ReasoningEffort.HIGH : reasoningEffort;
+		}
+
+		return picked;
 	}
 
 	/**

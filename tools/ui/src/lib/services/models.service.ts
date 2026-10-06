@@ -15,6 +15,7 @@ import {
 	apiFetch,
 	apiPost,
 	extractSseDataPayload,
+	getApiBaseUrl,
 	normalizeModelName,
 	sidecarFromFileToken,
 	sidecarFromTag,
@@ -105,7 +106,20 @@ export class ModelsService {
 	 * @returns List of available models with basic metadata
 	 */
 	static async list(): Promise<ApiModelsListResponse> {
-		return apiFetch<ApiModelsListResponse>(API_MODELS.LIST);
+		const apiBase = getApiBaseUrl();
+
+		if (!apiBase) return apiFetch<ApiModelsListResponse>(API_MODELS.LIST);
+
+		const response = await apiFetch<ApiModelsListResponse>(`${apiBase}/models`);
+
+		// external models are always ready, there is no load step
+		return {
+			...response,
+			data: (response.data ?? []).map((item: ApiModelDataEntry) => ({
+				...item,
+				status: item.status ?? { value: ServerModelStatus.LOADED }
+			}))
+		};
 	}
 
 	/**

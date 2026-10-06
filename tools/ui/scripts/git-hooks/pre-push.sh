@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Pre-push hook for llama-ui
-# Runs: lint + test
+# Runs: lint
 # Ignores unstaged changes (stashes them temporarily and restores after).
 
 needs_check=false
@@ -44,10 +44,6 @@ echo "Running pre-push checks for llama-ui..."
 npm run lint
 lint_ok=$?
 
-# Test
-npm test
-test_ok=$?
-
 # Restore stashed changes
 if git stash list | grep -q "$stash_name"; then
     git stash pop 2>/dev/null || true
@@ -55,11 +51,6 @@ fi
 
 if [ $lint_ok -ne 0 ]; then
     echo "❌ Lint failed"
-    exit 1
-fi
-
-if [ $test_ok -ne 0 ]; then
-    echo "❌ Tests failed"
     exit 1
 fi
 

@@ -8,7 +8,7 @@
 
 import { ServerRole } from '$lib/enums';
 import { PropsService } from '$lib/services/props.service';
-import { ApiError } from '$lib/utils';
+import { ApiError, isExternalApi } from '$lib/utils';
 
 const LOADING_RETRY_INTERVAL_MS = 1000;
 
@@ -31,12 +31,17 @@ class ServerStore {
 		return this.props?.default_generation_settings?.params || null;
 	}
 
+	get isExternal(): boolean {
+		return isExternalApi();
+	}
+
 	get isModelMode(): boolean {
 		return this.role === ServerRole.MODEL;
 	}
 
+	// external mode reuses the multi-model UI
 	get isRouterMode(): boolean {
-		return this.role === ServerRole.ROUTER;
+		return this.role === ServerRole.ROUTER || this.role === ServerRole.EXTERNAL;
 	}
 
 	get uiSettings(): Record<string, string | number | boolean> | undefined {
@@ -62,6 +67,16 @@ class ServerStore {
 		if (this.fetchPromise) return this.fetchPromise;
 
 		this.clearRetryTimer();
+
+		// external API has no /props
+		if (this.isExternal) {
+			this.props = null;
+			this.error = null;
+			this.status = null;
+			this.role = ServerRole.EXTERNAL;
+
+			return;
+		}
 
 		if (!background) {
 			this.loading = true;

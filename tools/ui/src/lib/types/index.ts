@@ -237,6 +237,3 @@ export type {
 
 // Reasoning
 export type { ReasoningEffortLevel } from './reasoning';
-
-// Splash
-export type { SplashDimensions } from './splash';

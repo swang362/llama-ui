@@ -4,13 +4,15 @@ import { base } from '$app/paths';
 import { HEADERS } from '$lib/constants';
 import { MimeTypeApplication } from '$lib/enums';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
+import { isExternalApi } from '$lib/utils/api-headers';
 
 /**
  * Validates API key by making a request to the server props endpoint
  * Throws SvelteKit errors for authentication failures or server issues
  */
 export async function validateApiKey(fetch: typeof globalThis.fetch): Promise<void> {
-	if (!browser) {
+	// external API auth errors show up on the chat request instead
+	if (!browser || isExternalApi()) {
 		return;
 	}
 

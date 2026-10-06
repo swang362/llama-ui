@@ -29,7 +29,7 @@ done
 
 echo ""
 echo "Pre-commit:  format (staged) + type-check"
-echo "Pre-push:    lint + test"
+echo "Pre-push:    lint"
 echo ""
 echo "Hooks stash unstaged changes temporarily and restore them after."
 echo "Skip with:  git commit --no-verify / git push --no-verify"

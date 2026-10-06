@@ -120,7 +120,19 @@
 			}
 		}
 
+		const apiBaseUrlChanged =
+			(processedConfig.apiBaseUrl ?? '').toString().trim() !==
+			(settingsStore.config.apiBaseUrl ?? '').toString().trim();
+
 		settingsStore.updateMultipleConfig(processedConfig);
+
+		// server role, models and props all depend on the endpoint, start over
+		if (apiBaseUrlChanged) {
+			window.location.reload();
+
+			return;
+		}
+
 		onClose?.();
 	}
 

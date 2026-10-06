@@ -301,6 +301,8 @@ export interface ApiChatCompletionRequest {
 	tools?: ApiChatCompletionTool[];
 	// Reasoning parameters
 	reasoning_format?: string;
+	// OpenAI reasoning effort, external API only
+	reasoning_effort?: string;
 	// Generation parameters
 	temperature?: number;
 	max_tokens?: number;
@@ -359,6 +361,8 @@ export interface ApiChatCompletionStreamChunk {
 		delta: {
 			content?: string;
 			reasoning_content?: string;
+			// used by OpenRouter and vLLM instead of reasoning_content
+			reasoning?: string;
 			model?: string;
 			tool_calls?: ApiChatCompletionToolCallDelta[];
 		};
