@@ -10,6 +10,7 @@ node_modules
 /build
 dev-dist
 dist
+*.zip
 
 # OS
 .DS_Store

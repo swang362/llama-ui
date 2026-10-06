@@ -1,7 +1,7 @@
 import { buildInfoPlugin } from './scripts/vite-plugin-build-info';
 import { nerdamerPlugin } from './scripts/vite-plugin-nerdamer';
 import { relativizeBasePlugin } from './scripts/vite-plugin-relativize-base';
-import { SVELTEKIT_PWA_OPTIONS } from './src/lib/constants/pwa.constants';
+import { PWA_MANIFEST, SVELTEKIT_PWA_OPTIONS } from './src/lib/constants/pwa.constants';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
@@ -11,6 +11,8 @@ import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite';
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), 'VITE_PUBLIC_');
 	const SERVER_ORIGIN = env.VITE_PUBLIC_SERVER_ORIGIN || 'http://localhost:8080';
+	// import.meta.env is not set while this config loads, so pass the app name to the manifest here
+	const APP_NAME = env.VITE_PUBLIC_APP_NAME || PWA_MANIFEST.name;
 
 	return {
 		build: {
@@ -22,7 +24,10 @@ export default defineConfig(({ mode }) => {
 		plugins: [
 			tailwindcss(),
 			sveltekit(),
-			SvelteKitPWA(SVELTEKIT_PWA_OPTIONS),
+			SvelteKitPWA({
+				...SVELTEKIT_PWA_OPTIONS,
+				manifest: { ...PWA_MANIFEST, name: APP_NAME, short_name: APP_NAME }
+			}),
 			buildInfoPlugin(),
 			nerdamerPlugin(),
 			relativizeBasePlugin()
