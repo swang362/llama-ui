@@ -1,9 +1,6 @@
+import { DEFAULT_API_KEY, DEFAULT_API_URL } from './app.constants';
 import { CLI_FLAGS } from './cli-flags.constants';
-import {
-	MANAGED_HIDDEN_SETTINGS,
-	MANAGED_LOCKED_SETTINGS,
-	MANAGED_MODE
-} from './managed.constants';
+import { MANAGED_HIDDEN_SETTINGS, MANAGED_MODE } from './managed.constants';
 import { DEFAULT_MCP_CONFIG } from './mcp.constants';
 import { SETTINGS_KEYS } from './settings-keys.constants';
 import { TITLE_GENERATION } from './title-generation.constants';
@@ -80,19 +77,23 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 			},
 			{
 				defaultValue: '',
-				help: 'Base URL of an external OpenAI-compatible API, for example <code>https://api.openai.com/v1</code>. Leave empty to use llama-server. The endpoint must allow browser CORS requests.',
+				help: DEFAULT_API_URL
+					? 'Base URL of an OpenAI-compatible API. Leave empty to use the default.'
+					: 'Base URL of an OpenAI-compatible API, for example <code>https://api.openai.com/v1</code>. Leave empty to use llama-server. The API must allow browser CORS requests.',
 				key: SETTINGS_KEYS.API_BASE_URL,
 				label: 'API Base URL',
+				placeholder: DEFAULT_API_URL || undefined,
 				type: SettingsFieldType.INPUT
 			},
 			{
 				defaultValue: '',
 				help: MANAGED_MODE
-					? 'API key for this service.'
-					: `Set the API Key if you are using <code> ${CLI_FLAGS.API_KEY} </code> option for the server, or the key of the external API.`,
+					? `API key for this service.${DEFAULT_API_KEY ? ' Leave empty to use the default key.' : ''}`
+					: `Key for llama-server (<code>${CLI_FLAGS.API_KEY}</code>) or the external API.${DEFAULT_API_KEY ? ' Leave empty to use the default key.' : ''}`,
 				isPrivate: true,
 				key: SETTINGS_KEYS.API_KEY,
 				label: 'API Key',
+				placeholder: DEFAULT_API_KEY ? 'Default key' : undefined,
 				type: SettingsFieldType.INPUT
 			},
 			{
@@ -679,9 +680,8 @@ function toSettingsSection(section: SettingsSectionEntry): SettingsSection {
 			.filter((s) => s.standaloneField !== false && !MANAGED_HIDDEN_SETTINGS.has(s.key))
 			.map((s) => ({
 				dependsOn: s.dependsOn,
-				help: MANAGED_LOCKED_SETTINGS.has(s.key) ? 'Managed by this deployment.' : s.help,
+				help: s.help,
 				isExperimental: s.isExperimental,
-				isLocked: MANAGED_LOCKED_SETTINGS.has(s.key),
 				isPositiveInteger: s.isPositiveInteger,
 				isPrivate: s.isPrivate,
 				key: s.key,

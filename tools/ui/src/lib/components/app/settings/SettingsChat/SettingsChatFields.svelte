@@ -92,7 +92,6 @@
 								}
 							: {}}
 						class="w-full {isCustomRealTime ? 'pr-8' : ''}"
-						disabled={field.isLocked}
 						oninput={(e) => onConfigChange(field.key, e.currentTarget.value)}
 						placeholder={currentModelParams[field.key] != null
 							? `Default: ${normalizeFloatingPoint(currentModelParams[field.key])}`

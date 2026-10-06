@@ -1,18 +1,30 @@
 import { redactValue } from './redact';
-import { CORS_PROXY, HEADERS } from '$lib/constants';
+import { CORS_PROXY, DEFAULT_API_KEY, DEFAULT_API_URL, HEADERS } from '$lib/constants';
 import { MimeTypeApplication } from '$lib/enums';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 
+/** Resolve a path like `/v1` against the page origin, full URLs pass through. */
+export function resolveApiUrl(url: string): string {
+	return url.startsWith('/') && typeof location !== 'undefined' ? `${location.origin}${url}` : url;
+}
+
 /**
  * Base URL of the external OpenAI-compatible API, without trailing slash.
- * Empty string means the UI talks to llama-server.
+ * Falls back to the build-time default. Empty string means the UI talks to llama-server.
  */
 export function getApiBaseUrl(): string {
-	return (settingsStore.config.apiBaseUrl?.toString().trim() ?? '').replace(/\/+$/, '');
+	const url = settingsStore.config.apiBaseUrl?.toString().trim() || DEFAULT_API_URL.trim();
+
+	return resolveApiUrl(url).replace(/\/+$/, '');
 }
 
 export function isExternalApi(): boolean {
 	return getApiBaseUrl() !== '';
+}
+
+/** API key from settings, or the build-time default when the setting is empty. */
+export function getApiKey(): string {
+	return settingsStore.config.apiKey?.toString().trim() || DEFAULT_API_KEY.trim();
 }
 
 /**
@@ -20,8 +32,7 @@ export function isExternalApi(): boolean {
  * Includes Bearer token if API key is configured
  */
 export function getAuthHeaders(): Record<string, string> {
-	const currentConfig = settingsStore.config;
-	const apiKey = currentConfig.apiKey?.toString().trim();
+	const apiKey = getApiKey();
 
 	return apiKey ? { [HEADERS.AUTHORIZATION]: `${HEADERS.BEARER}${apiKey}` } : {};
 }

@@ -10,9 +10,11 @@
 // API utilities
 export {
 	getApiBaseUrl,
+	getApiKey,
 	getAuthHeaders,
 	getJsonHeaders,
 	isExternalApi,
+	resolveApiUrl,
 	sanitizeHeaders
 } from './api-headers';
 export { ApiError, apiDelete, apiFetch, apiFetchWithParams, apiPost } from './api-fetch';

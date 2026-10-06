@@ -29,8 +29,6 @@ export interface SettingsEntry {
 	/** Options rendered for RADIO fields. Each entry maps a `value` (the radio's selected value) to the underlying config `key` whose boolean state mirrors it. */
 	radioOptions?: Array<{ value: string; label: string; key: string; isExperimental?: boolean }>;
 	isExperimental?: boolean;
-	/** Value is forced by a managed deployment, shown read-only */
-	isLocked?: boolean;
 	isPositiveInteger?: boolean;
 	/** When true, the field is rendered as a password input (e.g. API key). */
 	isPrivate?: boolean;

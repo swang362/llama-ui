@@ -16,6 +16,7 @@ import {
 	EXPECTED_THEMED_ICON_PAIR_COUNT,
 	FILE_EXTENSION_REGEX,
 	IMAGE_FILE_EXTENSION_REGEX,
+	MANAGED_MODE,
 	MCP_ALLOWED_ICON_MIME_TYPES,
 	MCP_SERVER_ID_PREFIX,
 	MCP_SSE,
@@ -114,7 +115,8 @@ export function parseMcpServerSettings(rawServers: unknown): MCPServerSettingsEn
 			id,
 			name: (entry as { name?: string })?.name,
 			url,
-			useProxy: Boolean((entry as { useProxy?: unknown })?.useProxy)
+			// a managed origin has no llama-server CORS proxy
+			useProxy: !MANAGED_MODE && Boolean((entry as { useProxy?: unknown })?.useProxy)
 		} satisfies MCPServerSettingsEntry;
 	});
 }

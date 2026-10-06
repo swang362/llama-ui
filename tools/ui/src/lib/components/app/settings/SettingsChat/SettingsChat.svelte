@@ -59,7 +59,9 @@
 				.fetch()
 				.then(() => modelsStore.fetchRouterModels())
 				.then(() => modelsStore.props.fetchModalitiesForLoadedModels())
-				.then(() => modelsStore.ensureFirstModelSelected());
+				.then(() => modelsStore.ensureFirstModelSelected())
+				// the server error banner already reports a failed fetch
+				.catch(() => {});
 		}
 	});
 
@@ -123,11 +125,16 @@
 		const apiBaseUrlChanged =
 			(processedConfig.apiBaseUrl ?? '').toString().trim() !==
 			(settingsStore.config.apiBaseUrl ?? '').toString().trim();
+		// the external API is probed only on load, a new key needs a fresh probe
+		const externalApiKeyChanged =
+			serverStore.isExternal &&
+			(processedConfig.apiKey ?? '').toString().trim() !==
+				(settingsStore.config.apiKey ?? '').toString().trim();
 
 		settingsStore.updateMultipleConfig(processedConfig);
 
 		// server role, models and props all depend on the endpoint, start over
-		if (apiBaseUrlChanged) {
+		if (apiBaseUrlChanged || externalApiKeyChanged) {
 			window.location.reload();
 
 			return;

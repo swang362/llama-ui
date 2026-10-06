@@ -18,6 +18,17 @@ Settings -> General -> **API Base URL**, for example `https://api.openai.com/v1`
 
 The URL is the base that the provider's SDKs use, so the UI calls `<base>/models` and `<base>/chat/completions`. A trailing slash is ignored.
 
+### Build-time defaults
+
+Any build, managed or not, can ship default values. They apply while the user leaves the setting empty, and the user can override them in Settings:
+
+| Variable                      | Effect                                                                                                                                   |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_PUBLIC_DEFAULT_API_URL` | Default API Base URL. With it, an empty setting means this API, not llama-server. A path like `/v1` is resolved against the page origin. |
+| `VITE_PUBLIC_DEFAULT_API_KEY` | Default API key. Compiled into the bundle, so every user can read it.                                                                    |
+
+The settings fields show the default as a placeholder. Managed values (below) override these defaults.
+
 ### Requirements
 
 - The API must allow **browser CORS requests** from the page origin, with the `Authorization` and `Content-Type` headers. OpenAI and OpenRouter allow this. Ollama needs `OLLAMA_ORIGINS=*`. Many other servers block it; serve the UI and API on one origin instead (see [Deployment](#deployment)).
@@ -34,6 +45,17 @@ llama.cpp extensions (`top_k`, `min_p`, DRY, XTC, `reasoning_format`, `timings_p
 - Content and tool calls from `choices[0].delta`.
 - Reasoning from `delta.reasoning_content` or `delta.reasoning` (OpenRouter, vLLM).
 - The model list from `/models`. When an entry has `architecture.input_modalities` (OpenRouter), it defines image and audio support. Without it, images are allowed and the API rejects them if the model has no vision.
+
+### Connection errors
+
+On load, the UI requests `<base>/models` to check the API, as it requests `/props` from llama-server. If the request fails, the "Server unavailable" warning shows the error, the chat input is disabled, and **Retry** checks again.
+
+The warning also points to the API key, with an **Open settings** button:
+
+- no API key is set: "No API key is set. Set your API key in Settings."
+- the API answers 401 or 403: "The API key was rejected. Check your API key in Settings."
+
+This hint is not shown when managed mode locks the key. Saving a new API key reloads the page, so the UI checks the API again with the new key.
 
 ### What does not work
 
@@ -57,10 +79,11 @@ Browser-side tools (`get_datetime`, `get_info`) and MCP servers that allow CORS 
 
 Managed mode is a build-time flag:
 
-| Variable                            | Effect                                                                                |
-| ----------------------------------- | ------------------------------------------------------------------------------------- |
-| `VITE_PUBLIC_MANAGED='true'`        | Turns managed mode on.                                                                |
-| `VITE_PUBLIC_MANAGED_API_KEY='...'` | Optional. Locks the API key to this value. When empty, users can enter their own key. |
+| Variable                            | Effect                                                                                                     |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `VITE_PUBLIC_MANAGED='true'`        | Turns managed mode on.                                                                                     |
+| `VITE_PUBLIC_MANAGED_API_URL='...'` | Optional. The API URL. Default `<page origin>/v1`. A path is resolved against the page origin.             |
+| `VITE_PUBLIC_MANAGED_API_KEY='...'` | Optional. Locks and hides the API key. When empty, users can enter their own key (or use the default key). |
 
 `tools/ui/.env.production` sets `VITE_PUBLIC_MANAGED='true'`, so **every `npm run build` is managed**. `npm run dev` does not read that file and stays unmanaged.
 
@@ -79,7 +102,7 @@ Note: this also affects the UI that the llama-server CMake build embeds. Use the
 
 ### What managed mode does
 
-The API base URL is always `<page origin>/v1`, for example `https://chat.example.com/v1`.
+The API base URL is always `VITE_PUBLIC_MANAGED_API_URL`, or `<page origin>/v1` when it is not set, for example `https://chat.example.com/v1`.
 
 These settings are **locked and hidden**:
 
@@ -90,7 +113,7 @@ These settings are **locked and hidden**:
 | llama.cpp samplers                | dynatemp range and exponent, top_k, min_p, XTC probability and threshold, typical_p, sampler order, backend sampling, repeat_last_n, repeat penalty, DRY multiplier, base, allowed length and penalty last N |
 | Other llama-server features       | "Continue" button, @-mention search depth                                                                                                                                                                    |
 
-When `VITE_PUBLIC_MANAGED_API_KEY` is set, **API Key** is locked too. It stays visible as a read-only field with the help text "Managed by this deployment."
+When `VITE_PUBLIC_MANAGED_API_KEY` is set, **API Key** is locked and hidden too. The "Use llama-server proxy" option in the MCP server dialog is hidden, and saved MCP servers do not use the proxy, because a managed origin has no llama-server CORS proxy.
 
 Locked settings keep their default value (the API URL and key keep their managed values). The UI applies these values after it loads the settings and before every save. A value in localStorage, an imported settings file, a reset, or a server push cannot change them.
 
@@ -132,14 +155,15 @@ Build with `npm run build` and leave `VITE_PUBLIC_MANAGED_API_KEY` empty. If the
 
 ## Implementation
 
-| Part                                                             | File                                      |
-| ---------------------------------------------------------------- | ----------------------------------------- |
-| Base URL helpers `getApiBaseUrl()`, `isExternalApi()`            | `src/lib/utils/api-headers.ts`            |
-| `ServerRole.EXTERNAL`, `serverStore.isExternal`, skips `/props`  | `src/lib/stores/server.svelte.ts`         |
-| Model list from `<base>/models`, models marked as loaded         | `src/lib/services/models.service.ts`      |
-| OpenAI-only request body, stream end without `[DONE]`, no resume | `src/lib/services/chat.service.ts`        |
-| Managed flags and the locked and hidden setting lists            | `src/lib/constants/managed.constants.ts`  |
-| Enforcement of locked values, `applyManagedSettings()`           | `src/lib/stores/settings/index.svelte.ts` |
-| Hidden fields, read-only locked fields, empty sections removed   | `src/lib/constants/settings.constants.ts` |
+| Part                                                                                        | File                                      |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `getApiBaseUrl()`, `getApiKey()` with build-time defaults                                   | `src/lib/utils/api-headers.ts`            |
+| Build-time defaults `DEFAULT_API_URL`, `DEFAULT_API_KEY`                                    | `src/lib/constants/app.constants.ts`      |
+| `ServerRole.EXTERNAL`, `serverStore.isExternal`, checks `<base>/models` instead of `/props` | `src/lib/stores/server.svelte.ts`         |
+| Model list from `<base>/models`, models marked as loaded                                    | `src/lib/services/models.service.ts`      |
+| OpenAI-only request body, stream end without `[DONE]`, no resume                            | `src/lib/services/chat.service.ts`        |
+| Managed flags, API URL and key, the hidden setting list                                     | `src/lib/constants/managed.constants.ts`  |
+| Enforcement of locked values, `applyManagedSettings()`                                      | `src/lib/stores/settings/index.svelte.ts` |
+| Hidden fields and empty sections removed from the settings UI                               | `src/lib/constants/settings.constants.ts` |
 
 To lock and hide another setting in managed mode, add its key to `MANAGED_HIDDEN_SETTINGS` in `managed.constants.ts`.

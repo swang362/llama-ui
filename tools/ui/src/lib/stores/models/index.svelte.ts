@@ -432,7 +432,8 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		this.error = null;
 
 		try {
-			if (!serverStore.props) {
+			// role is set once the server is probed, external mode never has props
+			if (!serverStore.role) {
 				await serverStore.fetch();
 			}
 

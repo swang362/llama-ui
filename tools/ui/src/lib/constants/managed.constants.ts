@@ -3,12 +3,15 @@ import { SETTINGS_KEYS } from './settings-keys.constants';
 // managed deployment, set at build time: the UI fronts a fixed OpenAI-compatible endpoint
 export const MANAGED_MODE = import.meta.env?.VITE_PUBLIC_MANAGED === 'true';
 
+// optional, defaults to <page origin>/v1, a path is resolved against the page origin
+export const MANAGED_API_URL: string = MANAGED_MODE
+	? import.meta.env?.VITE_PUBLIC_MANAGED_API_URL || '/v1'
+	: '';
+
 // optional, it is baked into the bundle and readable by every user
 export const MANAGED_API_KEY: string = MANAGED_MODE
 	? (import.meta.env?.VITE_PUBLIC_MANAGED_API_KEY ?? '')
 	: '';
-
-export const MANAGED_API_PATH = '/v1';
 
 // llama-server only: dropped from external requests or backed by llama-server endpoints
 const LLAMA_SERVER_SETTINGS = [
@@ -34,11 +37,12 @@ const LLAMA_SERVER_SETTINGS = [
 	SETTINGS_KEYS.XTC_THRESHOLD
 ];
 
-/** Settings removed from the settings UI in managed mode, forced to their default value except the API URL. */
+/** Settings forced and removed from the settings UI in managed mode: the API URL and key take their managed value, the rest their default. */
 export const MANAGED_HIDDEN_SETTINGS: ReadonlySet<string> = new Set(
 	MANAGED_MODE
 		? [
 				SETTINGS_KEYS.API_BASE_URL,
+				...(MANAGED_API_KEY ? [SETTINGS_KEYS.API_KEY] : []),
 				// whole Developer section
 				SETTINGS_KEYS.CUSTOM_CSS,
 				SETTINGS_KEYS.CUSTOM_JSON,
@@ -47,12 +51,5 @@ export const MANAGED_HIDDEN_SETTINGS: ReadonlySet<string> = new Set(
 				SETTINGS_KEYS.SYMBOLIC_MATH_ENABLED,
 				...LLAMA_SERVER_SETTINGS
 			]
-		: []
-);
-
-/** Settings with a forced value in managed mode. */
-export const MANAGED_LOCKED_SETTINGS: ReadonlySet<string> = new Set(
-	MANAGED_MODE
-		? [...(MANAGED_API_KEY ? [SETTINGS_KEYS.API_KEY] : []), ...MANAGED_HIDDEN_SETTINGS]
 		: []
 );

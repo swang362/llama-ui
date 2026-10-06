@@ -2,7 +2,7 @@
 	import { KeyValuePairs } from '$lib/components/app';
 	import { Input } from '$lib/components/ui/input';
 	import { Switch } from '$lib/components/ui/switch';
-	import { CLI_FLAGS, HEADERS, MCP_SERVER_URL_PLACEHOLDER } from '$lib/constants';
+	import { CLI_FLAGS, HEADERS, MANAGED_MODE, MCP_SERVER_URL_PLACEHOLDER } from '$lib/constants';
 	import { UrlProtocol } from '$lib/enums';
 	import { mcpStore } from '$lib/stores';
 	import type { KeyValuePair } from '$lib/types';
@@ -224,7 +224,7 @@
 		valuePlaceholder="Value"
 	/>
 
-	{#if !isWebSocket && onUseProxyChange}
+	{#if !isWebSocket && onUseProxyChange && !MANAGED_MODE}
 		<label
 			class={[
 				'mt-3 flex items-start gap-2',

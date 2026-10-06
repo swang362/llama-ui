@@ -31,6 +31,7 @@
 		versionStore
 	} from '$lib/stores';
 	import { initStores } from '$lib/stores/init';
+	import { getApiKey } from '$lib/utils';
 	import { ModeWatcher } from 'mode-watcher';
 	import { untrack } from 'svelte';
 	import { onMount } from 'svelte';
@@ -147,12 +148,15 @@
 	});
 
 	function checkApiKey() {
-		const apiKey = settingsStore.config.apiKey;
+		// read config so this re-runs when the key changes
+		void settingsStore.config.apiKey;
+
+		const apiKey = getApiKey();
 
 		// Without a stored key there is nothing to re-validate here; the keyless
 		// 401 case is handled by validateApiKey() at navigation time, and the
 		// reload below must never fire in a keyless loop.
-		if (!apiKey || apiKey.trim() === '' || serverStore.isExternal) {
+		if (!apiKey || serverStore.isExternal) {
 			return;
 		}
 
@@ -164,7 +168,7 @@
 			) {
 				const headers: Record<string, string> = {
 					'Content-Type': 'application/json',
-					[HEADERS.AUTHORIZATION]: `${HEADERS.BEARER}${apiKey.trim()}`
+					[HEADERS.AUTHORIZATION]: `${HEADERS.BEARER}${apiKey}`
 				};
 
 				fetch(`${base}/props`, { headers })

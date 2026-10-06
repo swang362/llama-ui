@@ -10,7 +10,7 @@
 import { browser } from '$app/environment';
 import {
 	MANAGED_API_KEY,
-	MANAGED_API_PATH,
+	MANAGED_API_URL,
 	MANAGED_HIDDEN_SETTINGS,
 	MANAGED_MODE,
 	SETTING_CONFIG_DEFAULT,
@@ -27,6 +27,7 @@ import {
 	configToParameterRecord,
 	getConfigValue,
 	normalizeFloatingPoint,
+	resolveApiUrl,
 	setConfigValue
 } from '$lib/utils';
 import { setMode } from 'mode-watcher';
@@ -433,7 +434,7 @@ class SettingsStore {
 			setConfigValue(this.config, key, getConfigValue(SETTING_CONFIG_DEFAULT, key));
 		}
 
-		this.config[SETTINGS_KEYS.API_BASE_URL] = `${location.origin}${MANAGED_API_PATH}`;
+		this.config[SETTINGS_KEYS.API_BASE_URL] = resolveApiUrl(MANAGED_API_URL);
 
 		if (MANAGED_API_KEY) {
 			this.config[SETTINGS_KEYS.API_KEY] = MANAGED_API_KEY;

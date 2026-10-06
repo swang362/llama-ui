@@ -78,7 +78,12 @@
 
 		conversationsStore.clearActiveConversation();
 
-		await modelsStore.fetch();
+		try {
+			await modelsStore.fetch();
+		} catch {
+			// the server error banner already reports it
+			return;
+		}
 
 		if (qParam !== null || modelParam !== null) {
 			await handleUrlParams();

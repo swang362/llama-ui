@@ -7,6 +7,7 @@
  */
 
 import { ServerRole } from '$lib/enums';
+import { ModelsService } from '$lib/services/models.service';
 import { PropsService } from '$lib/services/props.service';
 import { ApiError, isExternalApi } from '$lib/utils';
 
@@ -68,16 +69,6 @@ class ServerStore {
 
 		this.clearRetryTimer();
 
-		// external API has no /props
-		if (this.isExternal) {
-			this.props = null;
-			this.error = null;
-			this.status = null;
-			this.role = ServerRole.EXTERNAL;
-
-			return;
-		}
-
 		if (!background) {
 			this.loading = true;
 		}
@@ -90,18 +81,26 @@ class ServerStore {
 
 		const fetchPromise = (async () => {
 			try {
-				const props = await PropsService.fetch();
+				if (this.isExternal) {
+					// external API has no /props, the model list is the reachability check
+					this.role = ServerRole.EXTERNAL;
+					this.props = null;
+					await ModelsService.list();
+				} else {
+					const props = await PropsService.fetch();
 
-				this.props = props;
+					this.props = props;
+					this.detectRole(props);
+				}
+
 				this.error = null;
 				this.status = null;
-				this.detectRole(props);
 			} catch (error: unknown) {
 				this.error = error instanceof Error ? error.message : String(error);
 				this.status = error instanceof ApiError ? error.status : null;
 				console.error('Error fetching server properties:', error);
 
-				if (this.status === 503) {
+				if (this.status === 503 && !this.isExternal) {
 					this.scheduleRetry();
 				}
 			} finally {
