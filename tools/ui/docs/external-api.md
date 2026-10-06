@@ -133,8 +133,10 @@ Example for nginx:
 server {
     listen 443 ssl;
     server_name chat.example.com;
+    root /srv/llama-ui/dist;
 
-    location /v1/ {
+    # ^~ keeps the regex locations below from catching API paths
+    location ^~ /v1/ {
         proxy_pass https://upstream.example.com/v1/;
         proxy_set_header Authorization "Bearer sk-...";
         proxy_set_header Host upstream.example.com;
@@ -144,14 +146,53 @@ server {
         proxy_read_timeout 1h;
     }
 
+    # page routes fall back to the app
     location / {
-        root /srv/llama-ui/dist;
-        try_files $uri /index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # a missing asset must be a real 404, not index.html
+    location ~* \.(?:js|mjs|css|json|png|jpg|svg|ico|webp|woff2?|webmanifest)$ {
+        try_files $uri =404;
+    }
+
+    location = /manifest.webmanifest {
+        default_type application/manifest+json;
+        try_files $uri =404;
+    }
+
+    # file names are hashed, the content never changes
+    location ^~ /_app/immutable/ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # always check for a new release
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+
+    location = /sw.js {
+        add_header Cache-Control "no-cache";
+        try_files $uri =404;
     }
 }
 ```
 
-Build with `npm run build` and leave `VITE_PUBLIC_MANAGED_API_KEY` empty. If the proxy adds the key, users can leave the API Key field empty.
+Build with `npm run build` and leave `VITE_PUBLIC_MANAGED_API_KEY` empty. If the proxy adds the key, users can leave the API Key field empty. Extract the contents of `dist/` (or the release zip) into the web root, so `index.html` is at the top level.
+
+Do not send `index.html` for every missing file. Then a missing script gets HTML back, and the browser shows "Failed to load module script ... MIME type of text/html".
+
+### Troubleshooting: old app still loads
+
+Symptom: after a deployment the browser still requests files of another app (for example `start.<hash>.js` or `manifest.json`), and the console shows MIME type errors for scripts.
+
+Cause: a service worker from the app that was deployed on this origin before still controls the page and serves its cached `index.html`. A browser removes a service worker when its script returns 404. If the server answers the old script URL (often `/service-worker.js`) with `index.html`, the old worker stays installed.
+
+Fix:
+
+- Server: use the 404 rule above. Each browser then removes the old worker at its next update check, usually after one or two reloads.
+- One browser: DevTools -> Application -> Service workers -> **Unregister** every worker that is not `/sw.js`, then reload. "Clear site data" also works, but it deletes the conversations stored for this origin.
 
 ## Implementation
 
